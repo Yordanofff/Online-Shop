@@ -36,7 +36,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public Employee create(EmployeeRequestDto employeeRequestDtoRequest) {
+    public EmployeeResponseDto create(EmployeeRequestDto employeeRequestDtoRequest) {
         if (isEmailInDB(employeeRequestDtoRequest.getEmail())) {
             throw new ApiException("Email already in use. Please use a different email");
         }
@@ -57,7 +57,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             employee.setRole(optionalRole.get());
             employee.setPassword(encoder.passwordEncoder().encode(employeeRequestDtoRequest.getPassword()));
             employeeRepository.save(employee);
-            return employee;
+            return employeeMapper.toDto(employee);
         } catch (Exception exception){
             throw new ApiException("An internal error occurred. Please try again. " + exception.getCause());
         }

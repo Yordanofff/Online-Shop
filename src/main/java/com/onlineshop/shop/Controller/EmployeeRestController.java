@@ -1,7 +1,7 @@
 package com.onlineshop.shop.Controller;
 
 import com.onlineshop.shop.Dto.Request.EmployeeRequestDto;
-import com.onlineshop.shop.Entity.Employee;
+import com.onlineshop.shop.Dto.Response.EmployeeResponseDto;
 import com.onlineshop.shop.Entity.HttpResponse;
 import com.onlineshop.shop.Service.Implementation.EmployeeServiceImpl;
 import jakarta.validation.Valid;
@@ -52,12 +52,12 @@ public class EmployeeRestController {
             );
         }
         try {
-            Employee employee = employeeService.create(employeeRequestDto);
-//            return ResponseEntity.status(HttpStatus.CREATED).body(employee);
+            EmployeeResponseDto employeeResponseDto = employeeService.create(employeeRequestDto);
+//            return ResponseEntity.status(HttpStatus.CREATED).body(employeeResponseDto);
             return ResponseEntity.created(getUri()).body(
                     HttpResponse.builder()
                             .timeStamp(now().toString())
-                            .data(Map.of("employee", employee))
+                            .data(Map.of("employeeResponseDto", employeeResponseDto))
                             .message("Employee created")
                             .status(HttpStatus.CREATED)
                             .statusCode(HttpStatus.CREATED.value())
