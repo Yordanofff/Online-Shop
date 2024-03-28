@@ -29,6 +29,15 @@ public class EmployeeServiceImpl implements EmployeeService {
 
 
     @Override
+    public EmployeeResponseDto getEmployeeByID(Long id) {
+        Optional<Employee> optionalEmployee = employeeRepository.findById(id);
+        if (optionalEmployee.isEmpty()){
+            throw new ApiException("User with ID: " + id + " not found!");
+        }
+        return employeeMapper.toDto(optionalEmployee.get());
+    }
+
+    @Override
     public List<EmployeeResponseDto> getAllEmployees() {
         return employeeRepository.findAll().stream()
                 .map(employeeMapper::toDto)

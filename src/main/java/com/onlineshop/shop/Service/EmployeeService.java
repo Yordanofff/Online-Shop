@@ -8,6 +8,7 @@ import java.util.List;
 
 @Service
 public interface EmployeeService {
+    EmployeeResponseDto getEmployeeByID(Long id);
     List<EmployeeResponseDto> getAllEmployees();
     EmployeeResponseDto create(EmployeeRequestDto employeeRequestDtoRequest);
 }

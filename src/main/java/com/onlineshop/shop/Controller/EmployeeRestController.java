@@ -10,10 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
@@ -28,6 +25,43 @@ import static java.time.LocalTime.now;
 @RequestMapping("/api/v1/employee")
 public class EmployeeRestController {
     private final EmployeeServiceImpl employeeService;
+
+    @GetMapping("/get_all")
+    public ResponseEntity<?> getAllEmployees() {
+        return ResponseEntity.created(getUri()).body(
+                HttpResponse.builder()
+                        .timeStamp(now().toString())
+                        .data(Map.of("employees", employeeService.getAllEmployees()))
+                        .status(HttpStatus.OK)
+                        .statusCode(HttpStatus.OK.value())
+                        .build()
+        );
+    }
+
+    @GetMapping("/get/{id}")
+    public ResponseEntity<?> getEmployeeByID(@PathVariable Long id) {
+        try {
+            EmployeeResponseDto employeeResponseDto = employeeService.getEmployeeByID(id);
+            return ResponseEntity.created(getUri()).body(
+                    HttpResponse.builder()
+                            .timeStamp(now().toString())
+                            .data(Map.of("employee", employeeResponseDto))
+                            .status(HttpStatus.OK)
+                            .statusCode(HttpStatus.OK.value())
+                            .build()
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    HttpResponse.builder()
+                            .timeStamp(now().toString())
+                            .message("Validation error")
+                            .status(HttpStatus.BAD_REQUEST)
+                            .statusCode(HttpStatus.BAD_REQUEST.value())
+                            .developerMessage(e.getMessage())
+                            .build()
+            );
+        }
+    }
 
     @PostMapping("/add")
     public ResponseEntity<?> add(@RequestBody @Valid EmployeeRequestDto employeeRequestDto, BindingResult bindingResult) {
@@ -53,11 +87,10 @@ public class EmployeeRestController {
         }
         try {
             EmployeeResponseDto employeeResponseDto = employeeService.create(employeeRequestDto);
-//            return ResponseEntity.status(HttpStatus.CREATED).body(employeeResponseDto);
             return ResponseEntity.created(getUri()).body(
                     HttpResponse.builder()
                             .timeStamp(now().toString())
-                            .data(Map.of("employeeResponseDto", employeeResponseDto))
+                            .data(Map.of("employee", employeeResponseDto))
                             .message("Employee created")
                             .status(HttpStatus.CREATED)
                             .statusCode(HttpStatus.CREATED.value())
