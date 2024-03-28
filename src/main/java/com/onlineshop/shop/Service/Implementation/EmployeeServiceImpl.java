@@ -14,7 +14,6 @@ import com.onlineshop.shop.Utility.PasswordEncoder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -32,7 +31,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public List<EmployeeResponseDto> getAllEmployees() {
         return employeeRepository.findAll().stream()
-                .map(EmployeeMapper::toDto)
+                .map(employeeMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -54,10 +53,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
 
         try {
-            Employee employee = EmployeeMapper.toEntity(employeeRequestDtoRequest);
+            Employee employee = employeeMapper.toEntity(employeeRequestDtoRequest);
             employee.setRole(optionalRole.get());
-            employee.setCreatedAt(LocalDateTime.now());
-            employee.setEnabled(true);
             employee.setPassword(encoder.passwordEncoder().encode(employeeRequestDtoRequest.getPassword()));
             employeeRepository.save(employee);
             return employee;
