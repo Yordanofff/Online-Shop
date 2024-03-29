@@ -3,22 +3,16 @@ package com.onlineshop.shop.Controller;
 import com.onlineshop.shop.Dto.Request.EmployeeRequestDto;
 import com.onlineshop.shop.Dto.Response.EmployeeResponseDto;
 import com.onlineshop.shop.Entity.HttpResponse;
+import com.onlineshop.shop.Exception.ApiException;
 import com.onlineshop.shop.Service.Implementation.EmployeeServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import static java.time.LocalTime.now;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,84 +22,52 @@ public class EmployeeRestController {
 
     @GetMapping("/get_all")
     public ResponseEntity<?> getAllEmployees() {
-        return ResponseEntity.created(getUri()).body(
-                HttpResponse.builder()
-                        .timeStamp(now().toString())
-                        .data(Map.of("employees", employeeService.getAllEmployees()))
-                        .status(HttpStatus.OK)
-                        .statusCode(HttpStatus.OK.value())
-                        .build()
-        );
+        try {
+            return HttpResponse.ok(employeeService.getAllEmployees());
+        } catch (Exception e) {
+            return HttpResponse.internalServerError("Error while running employeeService.getAllEmployees()", e.getMessage());
+        }
     }
 
     @GetMapping("/get/{id}")
     public ResponseEntity<?> getEmployeeByID(@PathVariable Long id) {
         try {
             EmployeeResponseDto employeeResponseDto = employeeService.getEmployeeByID(id);
-            return ResponseEntity.created(getUri()).body(
-                    HttpResponse.builder()
-                            .timeStamp(now().toString())
-                            .data(Map.of("employee", employeeResponseDto))
-                            .status(HttpStatus.OK)
-                            .statusCode(HttpStatus.OK.value())
-                            .build()
-            );
+            return HttpResponse.ok(employeeResponseDto);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(
-                    HttpResponse.builder()
-                            .timeStamp(now().toString())
-                            .message("Validation error")
-                            .status(HttpStatus.BAD_REQUEST)
-                            .statusCode(HttpStatus.BAD_REQUEST.value())
-                            .developerMessage(e.getMessage())
-                            .build()
-            );
+            return HttpResponse.internalServerError("Error while trying to retrieve data for user with id: " + id, e.getMessage());
+        }
+    }
+
+    @PutMapping("/edit/{id}")
+    public ResponseEntity<?> editEmployeeByID(@PathVariable Long id,
+                                              @RequestBody @Valid EmployeeRequestDto employeeRequestDto,
+                                              BindingResult bindingResult) {
+        // TODO - instead of binding errors - check every field manually to allow partial data ... if field == null - ignore.
+        if (bindingResult.hasErrors()) {
+            return HttpResponse.validationError(bindingResult);
+        }
+
+        try {
+            EmployeeResponseDto employeeResponseDto = employeeService.editEmployeeByID(id, employeeRequestDto);
+            return HttpResponse.ok(employeeResponseDto);
+        } catch (ApiException e) {
+            return HttpResponse.conflict(e.getMessage()); // TODO - add Another Exception - one will be 500, the other one will be HTTPResponse conflict.
+        } catch (Exception e) {
+            return HttpResponse.internalServerError("", e.getMessage());
         }
     }
 
     @PostMapping("/add")
     public ResponseEntity<?> add(@RequestBody @Valid EmployeeRequestDto employeeRequestDto, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
-            List<String> errors = bindingResult.getAllErrors().stream()
-                    .map(error -> {
-                        if (error instanceof FieldError) {
-                            return ((FieldError) error).getField() + ": " + error.getDefaultMessage();
-                        }
-                        return error.getDefaultMessage();
-                    })
-                    .collect(Collectors.toList());
-
-            return ResponseEntity.badRequest().body(
-                    HttpResponse.builder()
-                            .timeStamp(now().toString())
-                            .message("Validation error")
-                            .status(HttpStatus.BAD_REQUEST)
-                            .statusCode(HttpStatus.BAD_REQUEST.value())
-                            .data(Map.of("errors", errors))
-                            .build()
-            );
+            return HttpResponse.validationError(bindingResult);
         }
         try {
             EmployeeResponseDto employeeResponseDto = employeeService.create(employeeRequestDto);
-            return ResponseEntity.created(getUri()).body(
-                    HttpResponse.builder()
-                            .timeStamp(now().toString())
-                            .data(Map.of("employee", employeeResponseDto))
-                            .message("Employee created")
-                            .status(HttpStatus.CREATED)
-                            .statusCode(HttpStatus.CREATED.value())
-                            .build()
-            );
+            return HttpResponse.created(employeeResponseDto);
         } catch (Exception ex) {
-            // Handle other exceptions
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(HttpResponse.builder()
-                            .timeStamp(now().toString())
-                            .message(ex.getMessage())
-                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                            .build()
-                    );
+            return HttpResponse.internalServerError("Error while attempting to add new employee", ex.getMessage());
         }
     }
 

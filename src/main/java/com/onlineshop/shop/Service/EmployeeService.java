@@ -11,4 +11,5 @@ public interface EmployeeService {
     EmployeeResponseDto getEmployeeByID(Long id);
     List<EmployeeResponseDto> getAllEmployees();
     EmployeeResponseDto create(EmployeeRequestDto employeeRequestDtoRequest);
+    EmployeeResponseDto editEmployeeByID(Long id, EmployeeRequestDto employeeRequestDto);
 }
